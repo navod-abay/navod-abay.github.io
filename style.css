@@ -1,0 +1,551 @@
+:root {
+    --bg-color: #0d1117;
+    --panel-bg: #161b22;
+    --panel-border: #30363d;
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-hover: #3182ce;
+    --danger: #f85149;
+    --success: #2ea043;
+    --sachs-color: #a371f7;
+    --sachs-hover: #8957e5;
+    --sachs-soft: rgba(163, 113, 247, 0.15);
+
+    --node-fill: #1f6feb;
+    --node-stroke: #58a6ff;
+    --edge-color: #8b949e;
+    --tree-edge-color: #3fb950;
+    --sachs-edge-color: #a371f7;
+    --sachs-cycle-color: #f78166;
+
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --mono-family: 'JetBrains Mono', 'Fira Code', monospace;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+
+    --radius-md: 8px;
+    --radius-lg: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+        radial-gradient(circle at top right, rgba(31, 111, 235, 0.1), transparent 400px),
+        radial-gradient(circle at bottom left, rgba(163, 113, 247, 0.07), transparent 400px);
+}
+
+.app-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+header { text-align: center; margin-bottom: 0.5rem; }
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #58a6ff, #a371f7);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+/* =====================================================================
+   Main grid layout
+====================================================================== */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* =====================================================================
+   Panels
+====================================================================== */
+.panel {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s ease;
+}
+.panel:hover { box-shadow: var(--shadow-lg); }
+
+.panel-header {
+    padding: 1.1rem 1.5rem;
+    border-bottom: 1px solid var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: rgba(22, 27, 34, 0.8);
+    backdrop-filter: blur(8px);
+    flex-shrink: 0;
+}
+
+.panel-header h2 { font-size: 1.2rem; font-weight: 600; }
+.panel-header-sub {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-left: 0.4rem;
+}
+
+/* Sachs bottom header: legend sits below title */
+.sachs-bottom-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding-bottom: 1rem;
+}
+.sachs-header-left { display: flex; flex-direction: column; gap: 0.4rem; width: 100%; }
+.sachs-bottom-header .badge { align-self: flex-end; margin-top: -2rem; }
+
+.controls {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.instruction { font-size: 0.8rem; color: var(--text-secondary); }
+
+/* =====================================================================
+   Tabs (Analysis panel)
+====================================================================== */
+.tab-switcher {
+    display: flex;
+    gap: 0.3rem;
+    background: rgba(0,0,0,0.3);
+    border-radius: 9999px;
+    padding: 3px;
+    border: 1px solid var(--panel-border);
+}
+.tab-btn {
+    padding: 0.3rem 0.9rem;
+    border-radius: 9999px;
+    font-family: var(--font-family);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+.tab-btn:hover { color: var(--text-primary); }
+.tab-btn.active[data-tab="kirchhoff"] {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 0 10px rgba(88, 166, 255, 0.3);
+}
+.tab-btn.active[data-tab="sachs"] {
+    background: var(--sachs-color);
+    color: white;
+    box-shadow: 0 0 10px rgba(163, 113, 247, 0.3);
+}
+.tab-content { display: none; }
+.tab-content.active { display: flex; }
+
+/* =====================================================================
+   Buttons
+====================================================================== */
+.btn {
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-md);
+    font-family: var(--font-family);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+.btn.primary { background-color: var(--accent); color: white; }
+.btn.primary:hover { background-color: var(--accent-hover); }
+.btn.secondary { background: transparent; border: 1px solid var(--panel-border); color: var(--text-primary); }
+.btn.secondary:hover { background: rgba(255,255,255,0.05); border-color: var(--text-secondary); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* =====================================================================
+   Canvas (editor panel) — height synced via JS ResizeObserver
+====================================================================== */
+.editor-panel { position: relative; }
+
+.canvas-container {
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+    background: rgba(0,0,0,0.2);
+}
+canvas { background: transparent; border-radius: var(--radius-md); cursor: crosshair; }
+
+.status-bar {
+    padding: 0.45rem 1rem;
+    background: var(--panel-border);
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+/* =====================================================================
+   Results panel
+====================================================================== */
+.results-panel { min-height: 460px; }
+
+.results-content {
+    padding: 1.25rem;
+    flex: 1;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow-y: auto;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 360px;
+    color: var(--text-secondary);
+    text-align: center;
+    opacity: 0.7;
+}
+.icon-placeholder { font-size: 3rem; margin-bottom: 1rem; }
+
+/* =====================================================================
+   Math sections inside results panel (collapsible for large n)
+====================================================================== */
+.math-section {
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.math-section h3 {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Collapsible details styling */
+details.collapsible-matrix {
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
+}
+details.collapsible-matrix summary {
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    user-select: none;
+    transition: background 0.15s;
+}
+details.collapsible-matrix summary:hover { background: rgba(255,255,255,0.04); }
+details.collapsible-matrix summary::before {
+    content: '▶';
+    font-size: 0.7rem;
+    transition: transform 0.2s ease;
+}
+details.collapsible-matrix[open] summary::before { transform: rotate(90deg); }
+details.collapsible-matrix .details-body { padding: 0 1.25rem 1.25rem; }
+
+.matrix-display {
+    display: flex;
+    justify-content: center;
+    font-size: 1rem;
+    overflow-x: auto;
+    padding: 0.5rem 0;
+}
+
+.determinant-result {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--panel-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 500;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.highlight-value { font-size: 1.5rem; color: var(--accent); font-weight: 700; }
+.highlight-value.sachs { color: var(--sachs-color); }
+
+/* Sachs formula summary box */
+.sachs-formula-box {
+    background: linear-gradient(135deg, rgba(163,113,247,0.08), rgba(88,166,255,0.05));
+    border: 1px solid rgba(163,113,247,0.25);
+    border-radius: var(--radius-md);
+    padding: 1.1rem 1.25rem;
+}
+.sachs-formula-box p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.7; margin-bottom: 0.4rem; }
+
+/* Legend (moved to Sachs subgraph panel header) */
+.sachs-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+.legend-swatch { width: 22px; height: 4px; border-radius: 2px; }
+.legend-swatch.edge { background: var(--sachs-edge-color); }
+.legend-swatch.cycle { background: var(--sachs-cycle-color); }
+.legend-swatch.faint { background: rgba(139,148,158,0.3); }
+
+/* =====================================================================
+   Bottom panels
+====================================================================== */
+.bottom-panel { grid-column: 1 / -1; }
+.hidden { display: none !important; }
+
+.badge {
+    color: white;
+    padding: 0.2rem 0.7rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    flex-shrink: 0;
+}
+.badge.kirchhoff-badge { background: var(--accent); }
+.badge.sachs-badge { background: var(--sachs-color); }
+
+.trees-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 1rem;
+    padding: 1.25rem;
+    background: rgba(0,0,0,0.1);
+    min-height: 180px;
+    max-height: 550px;
+    overflow-y: auto;
+}
+
+/* Tree / Sachs cards */
+.tree-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    padding: 0.85rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s, background 0.2s, border-color 0.2s;
+    cursor: default;
+}
+.tree-card:hover { transform: translateY(-2px); background: rgba(255,255,255,0.03); border-color: var(--accent); }
+.tree-card.sachs-card:hover { border-color: var(--sachs-color); }
+.tree-card span { margin-top: 0.4rem; font-size: 0.8rem; color: var(--text-secondary); text-align: center; }
+.tree-card .sachs-contribution { margin-top: 0.2rem; font-size: 0.76rem; color: var(--sachs-color); font-weight: 600; }
+
+.sachs-types { display: flex; gap: 0.3rem; flex-wrap: wrap; justify-content: center; margin-top: 0.25rem; }
+.sachs-type-tag { font-size: 0.7rem; padding: 1px 5px; border-radius: 4px; font-weight: 500; }
+.sachs-type-tag.edge { background: rgba(163,113,247,0.2); color: var(--sachs-edge-color); }
+.sachs-type-tag.cycle { background: rgba(247,129,102,0.2); color: var(--sachs-cycle-color); }
+
+/* Sachs contribution table */
+.sachs-sum-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+    margin-top: 0.6rem;
+}
+.sachs-sum-table th {
+    text-align: center;
+    padding: 0.35rem 0.5rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.75rem;
+    border-bottom: 1px solid var(--panel-border);
+}
+.sachs-sum-table td {
+    text-align: center;
+    padding: 0.3rem 0.5rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.sachs-sum-table tr:last-child td {
+    border-bottom: none;
+    font-weight: 600;
+    color: var(--sachs-color);
+    border-top: 1px solid var(--panel-border);
+}
+
+/* =====================================================================
+   Theorem section (bottom)
+====================================================================== */
+.theorem-section {
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+}
+
+.theorem-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--panel-border);
+    background: rgba(0,0,0,0.2);
+}
+.theorem-tab-btn {
+    padding: 0.85rem 1.75rem;
+    font-family: var(--font-family);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.theorem-tab-btn:hover { color: var(--text-primary); background: rgba(255,255,255,0.03); }
+.theorem-tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background: rgba(88,166,255,0.05);
+}
+.theorem-tab-btn[data-theorem="sachs-theory"].active {
+    color: var(--sachs-color);
+    border-bottom-color: var(--sachs-color);
+    background: rgba(163,113,247,0.05);
+}
+
+.theorem-content { display: none; padding: 2rem; }
+.theorem-content.active { display: block; }
+
+.theorem-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.theorem-block {
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-radius: var(--radius-md);
+    padding: 1.25rem 1.5rem;
+}
+.theorem-block h3 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+[id="sachs-theory"] .theorem-block h3 { color: var(--sachs-color); }
+.theorem-block p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.75; margin-bottom: 0.6rem; }
+
+.formula-block {
+    background: rgba(0,0,0,0.25);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: 0.75rem 1rem;
+    margin: 0.75rem 0;
+    overflow-x: auto;
+    font-size: 1rem;
+}
+[id="sachs-theory"] .formula-block { border-left-color: var(--sachs-color); }
+
+.theorem-list {
+    list-style: none;
+    padding: 0;
+    margin: 0.4rem 0 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.theorem-list li {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    padding-left: 1.1rem;
+    position: relative;
+    line-height: 1.6;
+}
+.theorem-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+}
+[id="sachs-theory"] .theorem-list li::before { color: var(--sachs-color); }
+
+.ref-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 0.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.ref-list li {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    line-height: 1.55;
+    padding-left: 1rem;
+    border-left: 2px solid rgba(255,255,255,0.08);
+}
+.ref-list em { color: var(--text-primary); font-style: italic; }
+
+/* =====================================================================
+   Animations
+====================================================================== */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.35s ease forwards; }
+
+/* =====================================================================
+   Scrollbar
+====================================================================== */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: var(--bg-color); }
+::-webkit-scrollbar-thumb { background: var(--panel-border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* =====================================================================
+   Responsive
+====================================================================== */
+@media (max-width: 1024px) {
+    .content-grid { grid-template-columns: 1fr; }
+    .theorem-grid { grid-template-columns: 1fr; }
+    .controls { gap: 0.5rem; }
+}

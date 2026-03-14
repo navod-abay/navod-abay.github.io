@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Theorem Visualizer — Kirchhoff & Sachs</title>
+    <meta name="description" content="Interactive visualization of Kirchhoff's Matrix Tree Theorem and Sachs' Theorem for graph adjacency matrices.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Graph Theorem Visualizer</h1>
+            <p class="subtitle">Explore Kirchhoff's Matrix Tree Theorem and Sachs' Theorem interactively.</p>
+        </header>
+
+        <main class="content-grid">
+            <!-- Left Column: Graph Editor -->
+            <section class="panel editor-panel" id="editor-panel">
+                <div class="panel-header">
+                    <h2>Graph Editor</h2>
+                    <div class="controls">
+                        <div class="instruction">Click to add nodes. Drag between nodes to add edges. (Max 9)</div>
+                        <button id="clear-btn" class="btn secondary">Clear</button>
+                        <button id="calc-btn" class="btn primary">Calculate &amp; Visualize</button>
+                    </div>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="graphCanvas"></canvas>
+                </div>
+                <div class="status-bar" id="editor-status">Ready</div>
+            </section>
+
+            <!-- Right Column: Tabbed Analysis -->
+            <section class="panel results-panel" id="results-panel">
+                <div class="panel-header">
+                    <h2>Analysis</h2>
+                    <div class="tab-switcher">
+                        <button class="tab-btn active" id="tab-kirchhoff" data-tab="kirchhoff">⬡ Kirchhoff</button>
+                        <button class="tab-btn" id="tab-sachs" data-tab="sachs">∮ Sachs</button>
+                    </div>
+                </div>
+
+                <!-- Kirchhoff tab content -->
+                <div class="results-content tab-content active" id="kirchhoff-content">
+                    <div class="empty-state">
+                        <div class="icon-placeholder">✨</div>
+                        <p>Construct a graph and click Calculate to see Kirchhoff's Theorem in action.</p>
+                    </div>
+                </div>
+
+                <!-- Sachs tab content -->
+                <div class="results-content tab-content" id="sachs-content">
+                    <div class="empty-state">
+                        <div class="icon-placeholder">∮</div>
+                        <p>Construct a graph and click Calculate to see Sachs' Theorem in action.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom: Spanning Trees (Kirchhoff) -->
+            <section class="panel bottom-panel" id="kirchhoff-bottom">
+                <div class="panel-header">
+                    <h2>Enumerated Spanning Trees</h2>
+                    <div class="badge kirchhoff-badge" id="tree-count-badge">0</div>
+                </div>
+                <div class="trees-grid" id="trees-grid"></div>
+            </section>
+
+            <!-- Bottom: Sachs Subgraphs -->
+            <section class="panel bottom-panel hidden" id="sachs-bottom">
+                <div class="panel-header sachs-bottom-header">
+                    <div class="sachs-header-left">
+                        <h2>Sachs Subgraphs <span class="panel-header-sub">(spanning all vertices)</span></h2>
+                        <div class="sachs-legend" id="sachs-legend">
+                            <div class="legend-item"><div class="legend-swatch faint"></div> Original edge</div>
+                            <div class="legend-item"><div class="legend-swatch edge"></div> K₂ component</div>
+                            <div class="legend-item"><div class="legend-swatch cycle"></div> Cycle component</div>
+                        </div>
+                    </div>
+                    <div class="badge sachs-badge" id="sachs-count-badge">0</div>
+                </div>
+                <div class="trees-grid" id="sachs-grid"></div>
+            </section>
+        </main>
+
+        <!-- Theorem Reference Section -->
+        <section class="theorem-section" id="theorem-section">
+            <div class="theorem-tabs">
+                <button class="theorem-tab-btn active" data-theorem="kirchhoff-theory">Kirchhoff's Theorem</button>
+                <button class="theorem-tab-btn" data-theorem="sachs-theory">Sachs' Theorem</button>
+            </div>
+
+            <div class="theorem-content active" id="kirchhoff-theory">
+                <div class="theorem-grid">
+                    <div class="theorem-block">
+                        <h3>Statement</h3>
+                        <p>
+                            Let <em>G</em> be a connected graph on <em>n</em> vertices. The number of spanning
+                            trees of <em>G</em> equals any cofactor of the <strong>Laplacian matrix</strong>
+                            <em>L = D − A</em>, where <em>D</em> is the degree matrix and <em>A</em> is the
+                            adjacency matrix.
+                        </p>
+                        <div class="formula-block">
+                            \[\tau(G) = \det(L_{11}) = \frac{1}{n}\lambda_1\lambda_2\cdots\lambda_{n-1}\]
+                        </div>
+                        <p>
+                            where \(L_{11}\) is the reduced Laplacian (any row &amp; column deleted) and
+                            \(\lambda_1,\ldots,\lambda_{n-1}\) are the non-zero eigenvalues of \(L\).
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Key Properties</h3>
+                        <ul class="theorem-list">
+                            <li>The Laplacian is always <strong>positive semi-definite</strong>; its smallest eigenvalue is 0 (with eigenvector <strong>1</strong>).</li>
+                            <li>A graph is connected iff its second-smallest Laplacian eigenvalue \(\lambda_2 > 0\) (<strong>algebraic connectivity</strong> / Fiedler value).</li>
+                            <li>For a complete graph \(K_n\): \(\tau(K_n) = n^{n-2}\) (Cayley's formula).</li>
+                            <li>For a path \(P_n\): \(\tau(P_n) = 1\).</li>
+                            <li>For a cycle \(C_n\): \(\tau(C_n) = n\).</li>
+                        </ul>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Historical Note</h3>
+                        <p>
+                            Gustav Kirchhoff (1824–1887) stated this theorem in 1847 while studying
+                            electrical resistor networks. The cofactor formula emerged from his current/voltage
+                            laws applied to graph-theoretic models. The theorem was later extended to weighted
+                            and directed graphs.
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>References</h3>
+                        <ul class="ref-list">
+                            <li>Kirchhoff, G. (1847). <em>Über die Auflösung der Gleichungen, auf welche man bei der Untersuchung der Linearen Verteilung galvanischer Ströme geführt wird.</em> Ann. Phys. Chem. 72, 497–508.</li>
+                            <li>Biggs, N. (1993). <em>Algebraic Graph Theory</em> (2nd ed.). Cambridge University Press.</li>
+                            <li>Godsil, C. &amp; Royle, G. (2001). <em>Algebraic Graph Theory.</em> Springer.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="theorem-content" id="sachs-theory">
+                <div class="theorem-grid">
+                    <div class="theorem-block">
+                        <h3>Statement</h3>
+                        <p>
+                            The coefficients of the <strong>characteristic polynomial</strong>
+                            \(p_G(\lambda) = \det(\lambda I - A)\) of the adjacency matrix \(A\) are given
+                            combinatorially. Writing \(p_G(\lambda) = \sum_{k=0}^{n} a_k\,\lambda^{n-k}\):
+                        </p>
+                        <div class="formula-block">
+                            \[a_k = \sum_{S\,\in\,\mathcal{S}_k(G)} (-1)^{p(S)}\,2^{c(S)}\]
+                        </div>
+                        <p>
+                            where \(\mathcal{S}_k(G)\) denotes all <strong>Sachs subgraphs</strong> of \(G\)
+                            on exactly \(k\) vertices. The determinant is the constant term:
+                        </p>
+                        <div class="formula-block">
+                            \[\det(A) = (-1)^n\,a_n = (-1)^n \sum_{S\,\in\,\mathcal{S}_n(G)} (-1)^{p(S)}\,2^{c(S)}\]
+                        </div>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Sachs Subgraphs</h3>
+                        <p>
+                            A <strong>Sachs subgraph</strong> \(S\) is a spanning subgraph (on \(k\) specified
+                            vertices) in which every connected component is either:
+                        </p>
+                        <ul class="theorem-list">
+                            <li><strong>K₂</strong> — a single edge (contributes to matchings)</li>
+                            <li><strong>C<sub>r</sub></strong> — a simple cycle of length \(r \geq 3\)</li>
+                        </ul>
+                        <p>Parameters:</p>
+                        <ul class="theorem-list">
+                            <li>\(p(S)\) — total number of connected components in \(S\)</li>
+                            <li>\(c(S)\) — number of <em>cycle</em> components (K₂ edges don't count)</li>
+                        </ul>
+                        <p>
+                            When \(k = n\) a Sachs subgraph is a <strong>perfect Sachs cover</strong> of \(G\).
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Example: Triangle C₃</h3>
+                        <p>
+                            The triangle has one perfect Sachs cover: the cycle \(C_3\) itself.
+                            \(p(S)=1\), \(c(S)=1\):
+                        </p>
+                        <div class="formula-block">
+                            \[\det(A) = (-1)^3 \cdot [(-1)^1 \cdot 2^1] = (-1)(-2) = 2\]
+                        </div>
+                        <p>
+                            Verified: \(\det\begin{pmatrix}0&1&1\\1&0&1\\1&1&0\end{pmatrix} = 2\) ✓
+                        </p>
+                        <h3 style="margin-top:1rem">Example: K₄</h3>
+                        <p>
+                            K₄ has 3 perfect matchings (each contributes \(+1\)) and 3 four-cycles
+                            (each contributes \(-2\)):
+                        </p>
+                        <div class="formula-block">
+                            \[\det(A_{K_4}) = (-1)^4[3(+1)+3(-2)] = -3\]
+                        </div>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Historical Note &amp; References</h3>
+                        <p>
+                            Horst Sachs (1927–2016) proved this theorem in 1964 as a way to compute
+                            the characteristic polynomial of a graph combinatorially, unifying spectral
+                            and structural graph theory. It is widely used in mathematical chemistry
+                            (Hückel theory) and coding theory.
+                        </p>
+                        <ul class="ref-list">
+                            <li>Sachs, H. (1964). <em>Beziehungen zwischen den in einem Graphen enthaltenen Kreisen und seinem charakteristischen Polynom.</em> Publ. Math. Debrecen 11, 119–134.</li>
+                            <li>Cvetković, D., Doob, M. &amp; Sachs, H. (1995). <em>Spectra of Graphs.</em> Johann Ambrosius Barth.</li>
+                            <li>Godsil, C. &amp; Royle, G. (2001). <em>Algebraic Graph Theory.</em> Springer, Ch. 8.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MathJax configuration before loading -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                processEscapes: true
+            },
+            startup: { typeset: true }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
