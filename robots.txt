@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://navod-abay.github.io/graph-theory-visualizer/sitemap.xml
