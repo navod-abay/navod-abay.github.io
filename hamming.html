@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hamming Cube Explorer — Binary Codes as Graphs</title>
+    <meta name="description" content="Interactive visualization of binary codewords as a hypercube graph, with linear subspace (code) highlighting via generator matrices or codeword span.">
+    <meta name="keywords" content="Hamming Distance, Hypercube Graph, Binary Linear Code, Generator Matrix, Coding Theory, GF(2), Graph Theory, Educational Interactive">
+    <meta name="author" content="Navod Abay">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://navod-abay.github.io/graph-theory-visualizer/hamming.html">
+    <meta property="og:title" content="Hamming Cube Explorer — Binary Codes as Graphs">
+    <meta property="og:description" content="Interactive visualization of binary codewords as a hypercube graph, with linear subspace (code) highlighting via generator matrices or codeword span.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://navod-abay.github.io/graph-theory-visualizer/hamming.html">
+    <meta property="twitter:title" content="Hamming Cube Explorer — Binary Codes as Graphs">
+    <meta property="twitter:description" content="Interactive visualization of binary codewords as a hypercube graph, with linear subspace (code) highlighting via generator matrices or codeword span.">
+
+    <link rel="canonical" href="https://navod-abay.github.io/graph-theory-visualizer/hamming.html">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Hamming Cube Explorer</h1>
+            <p class="subtitle">Binary codewords as a hypercube graph — highlight linear subspaces (codes) on top.</p>
+            <nav class="site-nav">
+                <a href="index.html" class="site-nav-link">Theorem Visualizer</a>
+                <a href="hamming.html" class="site-nav-link active">Hamming Cube Explorer</a>
+            </nav>
+        </header>
+
+        <main class="content-grid">
+            <!-- Left Column: Graph + controls -->
+            <section class="panel editor-panel" id="editor-panel">
+                <div class="panel-header">
+                    <h2>Hypercube Q<sub>n</sub></h2>
+                    <div class="controls">
+                        <div class="n-input-group">
+                            <label for="n-input">n</label>
+                            <input type="number" id="n-input" min="1" max="6" value="4">
+                        </div>
+                        <button id="generate-btn" class="btn primary">Generate</button>
+                    </div>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="hammingCanvas"></canvas>
+                </div>
+                <div class="status-bar" id="editor-status">Ready</div>
+            </section>
+
+            <!-- Right Column: Subspace controls + results -->
+            <section class="panel results-panel" id="results-panel">
+                <div class="panel-header">
+                    <h2>Subspace</h2>
+                    <div class="tab-switcher">
+                        <button class="tab-btn active" id="mode-generator" data-mode="generator">Generator Matrix</button>
+                        <button class="tab-btn" id="mode-codewords" data-mode="codewords">Click Codewords</button>
+                    </div>
+                </div>
+
+                <div class="results-content">
+                    <!-- Generator matrix mode -->
+                    <div class="mode-panel active" id="generator-panel">
+                        <p class="instruction">Enter basis codewords (each a length-n binary string). The span (all XOR combinations) will be highlighted.</p>
+                        <div class="matrix-rows" id="matrix-rows"></div>
+                        <div class="controls">
+                            <button id="add-row-btn" class="btn secondary">+ Add Row</button>
+                            <button id="show-subspace-btn" class="btn primary">Show Subspace</button>
+                        </div>
+                    </div>
+
+                    <!-- Codeword click mode -->
+                    <div class="mode-panel" id="codewords-panel">
+                        <p class="instruction">Click nodes on the graph to select codewords, then Calculate to find their linear span.</p>
+                        <div class="chip-list" id="selected-chips"></div>
+                        <div class="controls">
+                            <button id="clear-selection-btn" class="btn secondary">Clear Selection</button>
+                            <button id="calculate-span-btn" class="btn primary">Calculate Span</button>
+                        </div>
+                        <div class="hamming-legend">
+                            <div class="legend-item"><div class="legend-swatch" style="background:var(--code-color)"></div> Selected codeword</div>
+                            <div class="legend-item"><div class="legend-swatch" style="background:var(--code-added-color)"></div> Added to close span</div>
+                        </div>
+                    </div>
+
+                    <!-- Results -->
+                    <div class="empty-state" id="empty-state">
+                        <div class="icon-placeholder">⬢</div>
+                        <p>Define a subspace to see its code parameters and codeword list.</p>
+                    </div>
+                    <div id="results-body" class="hidden" style="display:flex; flex-direction:column; gap:1.25rem;">
+                        <div class="code-stats">
+                            <div class="code-stat"><span class="stat-label">n (length)</span><span class="stat-value" id="stat-n">–</span></div>
+                            <div class="code-stat"><span class="stat-label">k (dimension)</span><span class="stat-value" id="stat-k">–</span></div>
+                            <div class="code-stat"><span class="stat-label">|C| (size)</span><span class="stat-value" id="stat-size">–</span></div>
+                            <div class="code-stat"><span class="stat-label">d (min distance)</span><span class="stat-value" id="stat-d">–</span></div>
+                        </div>
+                        <div class="math-section">
+                            <h3>Codewords in Subspace</h3>
+                            <div class="codeword-list" id="codeword-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Reference Section -->
+        <section class="theorem-section" id="theorem-section">
+            <div class="theorem-content active" id="hamming-theory" style="display:block">
+                <div class="theorem-grid">
+                    <div class="theorem-block">
+                        <h3>Hypercube Graph Q<sub>n</sub></h3>
+                        <p>
+                            The vertices of Q<sub>n</sub> are all 2<sup>n</sup> binary strings of length n.
+                            Two vertices are joined by an edge iff they differ in exactly one bit —
+                            i.e. their <strong>Hamming distance</strong> is 1. Every vertex has degree n,
+                            so Q<sub>n</sub> has n·2<sup>n−1</sup> edges.
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Linear Codes as Subspaces</h3>
+                        <p>
+                            A <strong>binary linear code</strong> is a linear subspace C ⊆ GF(2)<sup>n</sup>:
+                            a set of codewords closed under XOR. A code of dimension k has |C| = 2<sup>k</sup>
+                            codewords, generated by XOR-combining any basis of k independent codewords
+                            (the rows of a <strong>generator matrix</strong>).
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Code Parameters [n, k, d]</h3>
+                        <p>
+                            n is the code length, k is its dimension, and d is the <strong>minimum distance</strong> —
+                            the smallest Hamming distance between any two distinct codewords. For a linear code,
+                            d equals the minimum Hamming weight (number of 1s) among its nonzero codewords.
+                            A larger d means the code can detect/correct more errors.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MathJax configuration before loading -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                processEscapes: true
+            },
+            startup: { typeset: true }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <script src="app-hamming.js"></script>
+</body>
+</html>
