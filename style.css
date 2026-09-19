@@ -24,6 +24,9 @@
     --code-soft: rgba(46, 160, 67, 0.15);
     --code-added-color: #d29922;
 
+    --hyper-color: #e3b341;
+    --hyper-hover: #c89a2f;
+
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
     --mono-family: 'JetBrains Mono', 'Fira Code', monospace;
 
@@ -680,6 +683,187 @@ details.collapsible-matrix .details-body { padding: 0 1.25rem 1.25rem; }
 }
 
 .hamming-legend { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; }
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+}
+.toggle-label input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.code-stats.orthogonal .stat-value { color: var(--accent); }
+
+/* =====================================================================
+   Hypergraph Signal Processing page
+====================================================================== */
+.split-btn { display: flex; position: relative; }
+.split-btn .btn.primary:first-child {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.dropdown-toggle-btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 1px solid rgba(255,255,255,0.2);
+    padding: 0.45rem 0.6rem;
+    background-color: var(--accent);
+    color: white;
+    border-top: none; border-right: none; border-bottom: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.dropdown-toggle-btn:hover { background-color: var(--accent-hover); }
+.dropdown-toggle-btn::after {
+    content: '';
+    display: inline-block;
+    width: 0; height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 5px solid white;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    min-width: 280px;
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+.dropdown-menu.open { display: flex; }
+.dropdown-item {
+    padding: 0.65rem 1rem;
+    font-size: 0.83rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-family: var(--font-family);
+    transition: background 0.15s;
+}
+.dropdown-item:hover { background: rgba(255,255,255,0.06); }
+.dropdown-item + .dropdown-item { border-top: 1px solid var(--panel-border); }
+
+.hyperedge-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 260px;
+    overflow-y: auto;
+}
+.hyperedge-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.7rem;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255,255,255,0.05);
+}
+.hyperedge-swatch { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.hyperedge-row .hyperedge-members { flex: 1; font-family: var(--mono-family); font-size: 0.83rem; color: var(--text-secondary); }
+.hyperedge-row .row-remove-btn { width: 1.6rem; height: 1.6rem; }
+.hyperedge-row input[type="number"] {
+    width: 4.5rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--panel-border);
+    background: rgba(0,0,0,0.25);
+    color: var(--text-primary);
+    font-family: var(--mono-family);
+    font-size: 0.82rem;
+    flex-shrink: 0;
+}
+.hyperedge-row input[type="number"]:focus { outline: none; border-color: var(--hyper-color); }
+
+.weight-rows { display: flex; flex-direction: column; gap: 0.5rem; }
+.weight-row { display: flex; align-items: center; gap: 0.6rem; }
+.weight-row .weight-label { flex: 1; display: flex; align-items: center; gap: 0.5rem; font-family: var(--mono-family); font-size: 0.83rem; color: var(--text-secondary); }
+.weight-row input[type="number"] {
+    width: 5.5rem;
+    padding: 0.3rem 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--panel-border);
+    background: rgba(0,0,0,0.25);
+    color: var(--text-primary);
+    font-family: var(--mono-family);
+    font-size: 0.85rem;
+}
+.weight-row input[type="number"]:focus { outline: none; border-color: var(--hyper-color); }
+
+.degree-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.degree-chip {
+    font-family: var(--mono-family);
+    font-size: 0.78rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    background: rgba(227, 179, 65, 0.12);
+    color: var(--hyper-color);
+    border: 1px solid rgba(227, 179, 65, 0.25);
+}
+
+.n-input-group select {
+    padding: 0.35rem 0.5rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--panel-border);
+    background: rgba(0,0,0,0.25);
+    color: var(--text-primary);
+    font-family: var(--font-family);
+    font-size: 0.85rem;
+    flex: 1;
+}
+.n-input-group select:focus { outline: none; border-color: var(--hyper-color); }
+
+.eigenvalue-list { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.eigenvalue-chip {
+    font-family: var(--mono-family);
+    font-size: 0.78rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(88, 166, 255, 0.12);
+    color: var(--accent);
+    border: 1px solid rgba(88, 166, 255, 0.25);
+}
+
+/* Compact layout for pages with a three-column grid */
+.app-container.compact {
+    max-width: none;
+    width: 98%;
+    padding: 1rem 0.75rem;
+    gap: 1rem;
+}
+.app-container.compact .content-grid { gap: 0.75rem; }
+.app-container.compact .panel-header { padding: 0.7rem 1rem; }
+.app-container.compact .canvas-container { padding: 0.5rem; }
+.app-container.compact .results-content { padding: 0.85rem; gap: 0.85rem; }
+.app-container.compact header { margin-bottom: 0; }
+
+.content-grid.three-col { grid-template-columns: 1.15fr 1fr 0.85fr; align-items: start; }
+@media (max-width: 1400px) {
+    .content-grid.three-col { grid-template-columns: 1fr 1fr; }
+    .content-grid.three-col .spectral-panel { grid-column: 1 / -1; }
+}
+@media (max-width: 1024px) {
+    .content-grid.three-col { grid-template-columns: 1fr; }
+    .content-grid.three-col .spectral-panel { grid-column: auto; }
+}
 
 /* =====================================================================
    Responsive

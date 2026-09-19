@@ -27,6 +27,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const statD    = document.getElementById('stat-d');
     const codewordList = document.getElementById('codeword-list');
 
+    const orthogonalToggle = document.getElementById('orthogonal-toggle');
+    const orthogonalBody   = document.getElementById('orthogonal-body');
+    const statNPerp    = document.getElementById('stat-n-perp');
+    const statKPerp    = document.getElementById('stat-k-perp');
+    const statSizePerp = document.getElementById('stat-size-perp');
+    const statDPerp    = document.getElementById('stat-d-perp');
+    const codewordListPerp = document.getElementById('codeword-list-perp');
+
     const NODE_RADIUS  = 14;
     const CANVAS_MIN_H = 400;
     const CANVAS_MAX_H = 700;
@@ -37,7 +45,10 @@ document.addEventListener("DOMContentLoaded", () => {
     let activeMode = 'generator';
     let selectedWords = [];       // integers, in click order (codewords mode)
     let subspace = null;          // Set<number> currently highlighted, or null
+    let subspaceBasis = [];       // basis vectors of the current subspace (for computing C-perp)
     let originalWords = new Set(); // words considered "user-provided" for the current subspace
+    let showOrthogonal = false;
+    let orthogonalSet = null;     // Set<number>, the dual code C-perp, or null
 
     // =====================================================================
     // Canvas sizing (mirrors app.js's panel <-> canvas height sync)
@@ -102,6 +113,21 @@ document.addEventListener("DOMContentLoaded", () => {
         return span;
     }
 
+    // Orthogonal complement C-perp = { x : x . b = 0 (mod 2) for every basis vector b of C }.
+    // Brute-force over all 2^n vectors is fine at this scale (n <= 6).
+    function gf2Orthogonal(basis, forN) {
+        const orth = new Set();
+        const total = 1 << forN;
+        for (let x = 0; x < total; x++) {
+            let ok = true;
+            for (const b of basis) {
+                if (popcount(x & b) % 2 !== 0) { ok = false; break; }
+            }
+            if (ok) orth.add(x);
+        }
+        return orth;
+    }
+
     function minDistance(codewordSet) {
         const words = Array.from(codewordSet);
         if (words.length < 2) return words.length === 1 ? 0 : null;
@@ -153,7 +179,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
         selectedWords = [];
         subspace = null;
+        subspaceBasis = [];
         originalWords = new Set();
+        orthogonalSet = null;
+        orthogonalToggle.checked = false;
+        showOrthogonal = false;
+        orthogonalBody.classList.add('hidden');
+        orthogonalBody.style.display = 'none';
         rebuildMatrixRowsForN();
         renderChips();
         showEmptyResults();
@@ -184,18 +216,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const nodeById = id => nodes.find(nd => nd.id === id);
         const inSubspace = id => subspace && subspace.has(id);
+        const inOrthogonal = id => showOrthogonal && orthogonalSet && orthogonalSet.has(id);
 
         // Edges
         edges.forEach(e => {
-            const highlighted = inSubspace(e.u) && inSubspace(e.v);
+            const inC     = inSubspace(e.u) && inSubspace(e.v);
+            const inCPerp = !inC && inOrthogonal(e.u) && inOrthogonal(e.v);
             const p1 = pos(nodeById(e.u)), p2 = pos(nodeById(e.v));
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-            if (highlighted) {
+            if (inC) {
                 ctx.strokeStyle = 'rgba(46,160,67,0.9)';
                 ctx.lineWidth = 2.5;
                 ctx.shadowBlur = 6;
                 ctx.shadowColor = 'rgba(46,160,67,0.6)';
+            } else if (inCPerp) {
+                ctx.strokeStyle = 'rgba(88,166,255,0.9)';
+                ctx.lineWidth = 2.5;
+                ctx.shadowBlur = 6;
+                ctx.shadowColor = 'rgba(88,166,255,0.6)';
             } else {
                 ctx.strokeStyle = 'rgba(139,148,158,0.25)';
                 ctx.lineWidth = 1.2;
@@ -215,6 +254,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (inSubspace(nd.id)) {
                     if (originalWords.has(nd.id)) { stroke = '#2ea043'; glow = '#2ea043'; }
                     else { stroke = '#d29922'; glow = '#d29922'; }
+                } else if (inOrthogonal(nd.id)) {
+                    stroke = '#58a6ff'; glow = '#58a6ff';
                 } else {
                     stroke = 'rgba(139,148,158,0.35)'; glow = 'transparent';
                 }
@@ -343,8 +384,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         subspace = gf2Span(rows);
+        subspaceBasis = gf2Basis(rows);
         originalWords = new Set(rows);
         selectedWords = [];
+        recomputeOrthogonal();
         renderResults(subspace, originalWords);
         drawGraph();
     });
@@ -375,6 +418,7 @@ document.addEventListener("DOMContentLoaded", () => {
     clearSelectionBtn.addEventListener('click', () => {
         selectedWords = [];
         subspace = null;
+        subspaceBasis = [];
         renderChips();
         showEmptyResults();
         drawGraph();
@@ -386,8 +430,52 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         subspace = gf2Span(selectedWords);
+        subspaceBasis = gf2Basis(selectedWords);
         originalWords = new Set(selectedWords);
+        recomputeOrthogonal();
         renderResults(subspace, originalWords);
+        drawGraph();
+    });
+
+    // =====================================================================
+    // Orthogonal complement toggle
+    // =====================================================================
+    function recomputeOrthogonal() {
+        orthogonalSet = subspace ? gf2Orthogonal(subspaceBasis, n) : null;
+    }
+
+    function renderOrthogonalResults() {
+        if (!showOrthogonal || !orthogonalSet) {
+            orthogonalBody.classList.add('hidden');
+            orthogonalBody.style.display = 'none';
+            return;
+        }
+        orthogonalBody.classList.remove('hidden');
+        orthogonalBody.style.display = 'flex';
+
+        const kPerp = Math.round(Math.log2(orthogonalSet.size));
+        const dPerp = minDistance(orthogonalSet);
+
+        statNPerp.textContent = n;
+        statKPerp.textContent = kPerp;
+        statSizePerp.textContent = orthogonalSet.size;
+        statDPerp.textContent = dPerp === null ? '–' : dPerp;
+
+        codewordListPerp.innerHTML = '';
+        Array.from(orthogonalSet).sort((a, b) => a - b).forEach(w => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.style.background = 'rgba(88,166,255,0.15)';
+            chip.style.color = 'var(--accent)';
+            chip.style.borderColor = 'rgba(88,166,255,0.3)';
+            chip.textContent = toBits(w);
+            codewordListPerp.appendChild(chip);
+        });
+    }
+
+    orthogonalToggle.addEventListener('change', () => {
+        showOrthogonal = orthogonalToggle.checked;
+        renderOrthogonalResults();
         drawGraph();
     });
 
@@ -399,6 +487,9 @@ document.addEventListener("DOMContentLoaded", () => {
         resultsBody.classList.add('hidden');
         resultsBody.style.display = 'none';
         emptyState.style.display = 'flex';
+        orthogonalSet = null;
+        orthogonalBody.classList.add('hidden');
+        orthogonalBody.style.display = 'none';
     }
 
     function renderResults(span, original) {
@@ -424,6 +515,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         statusBar.textContent = `Subspace: [${n}, ${k}, ${d === null ? '–' : d}], ${span.size} codewords.`;
+        renderOrthogonalResults();
     }
 
     // =====================================================================

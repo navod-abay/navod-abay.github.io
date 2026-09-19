@@ -33,6 +33,7 @@
             <nav class="site-nav">
                 <a href="index.html" class="site-nav-link">Theorem Visualizer</a>
                 <a href="hamming.html" class="site-nav-link active">Hamming Cube Explorer</a>
+                <a href="hypergraph.html" class="site-nav-link">Hypergraph Signal Processing</a>
             </nav>
         </header>
 
@@ -87,6 +88,7 @@
                         <div class="hamming-legend">
                             <div class="legend-item"><div class="legend-swatch" style="background:var(--code-color)"></div> Selected codeword</div>
                             <div class="legend-item"><div class="legend-swatch" style="background:var(--code-added-color)"></div> Added to close span</div>
+                            <div class="legend-item"><div class="legend-swatch" style="background:var(--accent)"></div> Orthogonal complement C<sup>⊥</sup></div>
                         </div>
                     </div>
 
@@ -105,6 +107,24 @@
                         <div class="math-section">
                             <h3>Codewords in Subspace</h3>
                             <div class="codeword-list" id="codeword-list"></div>
+                        </div>
+
+                        <label class="toggle-label">
+                            <input type="checkbox" id="orthogonal-toggle">
+                            Show orthogonal complement C<sup>⊥</sup>
+                        </label>
+
+                        <div id="orthogonal-body" class="hidden" style="display:flex; flex-direction:column; gap:1.25rem;">
+                            <div class="code-stats orthogonal">
+                                <div class="code-stat"><span class="stat-label">n (length)</span><span class="stat-value" id="stat-n-perp">–</span></div>
+                                <div class="code-stat"><span class="stat-label">k<sup>⊥</sup> (dimension)</span><span class="stat-value" id="stat-k-perp">–</span></div>
+                                <div class="code-stat"><span class="stat-label">|C<sup>⊥</sup>| (size)</span><span class="stat-value" id="stat-size-perp">–</span></div>
+                                <div class="code-stat"><span class="stat-label">d<sup>⊥</sup> (min distance)</span><span class="stat-value" id="stat-d-perp">–</span></div>
+                            </div>
+                            <div class="math-section">
+                                <h3>Codewords in C<sup>⊥</sup></h3>
+                                <div class="codeword-list" id="codeword-list-perp"></div>
+                            </div>
                         </div>
                     </div>
                 </div>

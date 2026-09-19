@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypergraph Signal Processing — Laplacians, Spectral Analysis &amp; Filtering</title>
+    <meta name="description" content="Build hypergraphs interactively (up to 15 nodes, weighted hyperedges), then explore the incidence matrix, hypergraph Laplacian, normalized Laplacian, and shift operator, their eigenvalues and eigenvectors, and apply a custom spectral filter back to the node domain.">
+    <meta name="keywords" content="Hypergraph, Hypergraph Signal Processing, Incidence Matrix, Hyperedge, Hypergraph Laplacian, Normalized Laplacian, Shift Operator, Spectral Graph Theory, Eigenvalues, Eigenvectors, Graph Fourier Transform, Spectral Filter, Graph Theory, Matrix Algebra, Educational Interactive">
+    <meta name="author" content="Navod Abay">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://navod-abay.github.io/graph-theory-visualizer/hypergraph.html">
+    <meta property="og:title" content="Hypergraph Signal Processing — Laplacians, Spectral Analysis &amp; Filtering">
+    <meta property="og:description" content="Build hypergraphs interactively, then explore the Laplacian, normalized Laplacian, and shift operator, their eigenvalues and eigenvectors, and apply a custom spectral filter back to the node domain.">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://navod-abay.github.io/graph-theory-visualizer/hypergraph.html">
+    <meta property="twitter:title" content="Hypergraph Signal Processing — Laplacians, Spectral Analysis &amp; Filtering">
+    <meta property="twitter:description" content="Build hypergraphs interactively, then explore the Laplacian, normalized Laplacian, and shift operator, their eigenvalues and eigenvectors, and apply a custom spectral filter back to the node domain.">
+
+    <link rel="canonical" href="https://navod-abay.github.io/graph-theory-visualizer/hypergraph.html">
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container compact">
+        <header>
+            <h1>Hypergraph Signal Processing</h1>
+            <p class="subtitle">Build hypergraphs interactively, then explore their Laplacians, spectral properties, and a custom filter back to the node domain.</p>
+            <nav class="site-nav">
+                <a href="index.html" class="site-nav-link">Theorem Visualizer</a>
+                <a href="hamming.html" class="site-nav-link">Hamming Cube Explorer</a>
+                <a href="hypergraph.html" class="site-nav-link active">Hypergraph Signal Processing</a>
+            </nav>
+        </header>
+
+        <main class="content-grid three-col">
+            <!-- Left Column: Hypergraph Editor -->
+            <section class="panel editor-panel" id="editor-panel">
+                <div class="panel-header">
+                    <h2>Hypergraph Editor</h2>
+                    <div class="controls">
+                        <div class="split-btn">
+                            <button id="random-btn" class="btn primary">Random</button>
+                            <button id="random-dropdown-toggle" class="dropdown-toggle-btn" aria-haspopup="true" aria-expanded="false"></button>
+                            <div class="dropdown-menu" id="random-dropdown-menu">
+                                <button class="dropdown-item" id="random-same-nodes">Random hypergraph with the same number of nodes</button>
+                                <button class="dropdown-item" id="random-same-nodes-edges">Random hypergraph with the same number of nodes and edges</button>
+                            </div>
+                        </div>
+                        <button id="add-hyperedge-btn" class="btn secondary">Add Hyperedge</button>
+                        <button id="clear-selection-btn" class="btn secondary">Clear Selection</button>
+                        <button id="clear-all-btn" class="btn secondary">Clear All</button>
+                    </div>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="hypergraphCanvas"></canvas>
+                </div>
+                <div class="status-bar" id="editor-status">
+                    Click empty canvas to add a node (max 15). Click nodes to select them, then "Add Hyperedge". Double-click a node to delete it.
+                </div>
+            </section>
+
+            <!-- Right Column: Hyperedges + Matrices -->
+            <section class="panel results-panel" id="results-panel">
+                <div class="panel-header">
+                    <h2>Structure</h2>
+                    <div class="badge" id="edge-count-badge" style="background:var(--hyper-color)">0 edges</div>
+                </div>
+
+                <div class="results-content">
+                    <div class="math-section">
+                        <h3>Hyperedges &amp; Weights</h3>
+                        <div class="hyperedge-list" id="hyperedge-list">
+                            <p style="color:var(--text-secondary); font-size:0.85rem;">No hyperedges yet — select 2+ nodes and click "Add Hyperedge".</p>
+                        </div>
+                    </div>
+
+                    <div class="math-section">
+                        <h3>Node Degrees (hyperedges per node)</h3>
+                        <div class="degree-list" id="degree-list"></div>
+                    </div>
+
+                    <div id="incidence-section"></div>
+                    <div id="operators-section"></div>
+                </div>
+            </section>
+
+            <!-- Third Column: Spectral Properties -->
+            <section class="panel results-panel spectral-panel" id="spectral-panel">
+                <div class="panel-header">
+                    <h2>Spectral Properties</h2>
+                </div>
+
+                <div class="results-content">
+                    <div class="n-input-group" style="margin-bottom: -0.5rem;">
+                        <label for="spectral-matrix-select">Operate on</label>
+                        <select id="spectral-matrix-select">
+                            <option value="laplacian">Hypergraph Laplacian (L)</option>
+                            <option value="normalized">Normalized Hypergraph Laplacian (Δ)</option>
+                            <option value="shift">Shift Operator (S)</option>
+                        </select>
+                    </div>
+                    <div id="spectral-section"></div>
+
+                    <details class="collapsible-matrix" id="filter-panel" open>
+                        <summary>Spectral Filter</summary>
+                        <div class="details-body">
+                            <p style="color:var(--text-secondary); font-size:0.82rem; margin-bottom:0.75rem;">
+                                Define a signal x(v) per node and a gain g(λ) per eigenvalue of the operator
+                                selected above. x̂ = V<sup>−1</sup>x transforms it to the spectral domain,
+                                x̂' = g ⊙ x̂ applies the filter, and x' = V x̂' brings it back to the node domain.
+                            </p>
+                            <p style="font-size:0.8rem; color:var(--text-primary); font-weight:600; margin-bottom:0.4rem;">Node-domain signal x</p>
+                            <div class="weight-rows" id="signal-rows">
+                                <p style="color:var(--text-secondary); font-size:0.85rem;">No nodes yet.</p>
+                            </div>
+                            <p style="font-size:0.8rem; color:var(--text-primary); font-weight:600; margin:0.9rem 0 0.4rem;">Filter gains g(λ)</p>
+                            <div class="weight-rows" id="filter-gain-rows">
+                                <p style="color:var(--text-secondary); font-size:0.85rem;">Add nodes and hyperedges first.</p>
+                            </div>
+                            <div id="filter-result" style="margin-top:0.9rem;"></div>
+                        </div>
+                    </details>
+                </div>
+            </section>
+        </main>
+
+        <!-- Reference Section -->
+        <section class="theorem-section" id="theorem-section">
+            <div class="theorem-content active" id="hypergraph-theory" style="display:block">
+                <div class="theorem-grid">
+                    <div class="theorem-block">
+                        <h3>Hypergraphs</h3>
+                        <p>
+                            A <strong>hypergraph</strong> H = (V, E) generalizes a graph by allowing each
+                            <strong>hyperedge</strong> e ∈ E to connect any subset of vertices (|e| ≥ 2),
+                            not just a pair. Ordinary graphs are the special case where every hyperedge has
+                            size 2.
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Incidence Matrix</h3>
+                        <p>
+                            A hypergraph with n vertices and m hyperedges is represented by an n × m
+                            <strong>incidence matrix</strong> H, where H<sub>ij</sub> = 1 if vertex i belongs
+                            to hyperedge j, and 0 otherwise. Row sums give vertex degrees; column sums give
+                            hyperedge cardinalities — the foundation for hypergraph Laplacians and spectral
+                            signal processing built on top of H.
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Weighted Degrees</h3>
+                        <p>
+                            Each hyperedge e carries a weight w(e) (default 1, editable in the "Hyperedge
+                            Weights" panel). The weighted vertex degree matrix D<sub>v</sub> is diagonal with
+                            D<sub>v</sub>(i,i) = Σ<sub>e</sub> w(e)·H<sub>ie</sub>. The edge degree matrix
+                            D<sub>e</sub> is diagonal with D<sub>e</sub>(e,e) = |e| (its cardinality,
+                            unweighted).
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Hypergraph Laplacian</h3>
+                        <p>
+                            Following Zhou, Huang &amp; Schölkopf (2006), define the weighted adjacency-like
+                            operator A = H W D<sub>e</sub><sup>−1</sup> H<sup>T</sup>, where W = diag(w(e)).
+                            The (combinatorial) <strong>hypergraph Laplacian</strong> is:
+                        </p>
+                        <div class="formula-block">
+                            \[L = D_v - H\,W\,D_e^{-1}\,H^T\]
+                        </div>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Normalized Hypergraph Laplacian</h3>
+                        <p>
+                            Symmetrically normalizing by D<sub>v</sub><sup>−1/2</sup> gives the operator
+                            Θ = D<sub>v</sub><sup>−1/2</sup> H W D<sub>e</sub><sup>−1</sup> H<sup>T</sup> D<sub>v</sub><sup>−1/2</sup>
+                            and the <strong>normalized hypergraph Laplacian</strong>:
+                        </p>
+                        <div class="formula-block">
+                            \[\Delta = I - \Theta = I - D_v^{-1/2} H\,W\,D_e^{-1}\,H^T D_v^{-1/2}\]
+                        </div>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Hypergraph Shift Operator</h3>
+                        <p>
+                            As in graph signal processing, a <strong>shift operator</strong> propagates a
+                            signal one hop across the structure. Here it's the random-walk operator built from
+                            the same weighted adjacency term:
+                        </p>
+                        <div class="formula-block">
+                            \[S = D_v^{-1}\,H\,W\,D_e^{-1}\,H^T\]
+                        </div>
+                        <p>
+                            S is similar to Θ (S = D<sub>v</sub><sup>−1/2</sup> Θ D<sub>v</sub><sup>1/2</sup>),
+                            so it shares Θ's eigenvalues — the hypergraph's spectral "frequencies" that a
+                            filter would act on next.
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Spectral Properties</h3>
+                        <p>
+                            The eigenvalues of L or Δ play the role of graph "frequencies": the smallest
+                            (0 for L, since L's rows sum to 0) corresponds to the all-constant signal, and
+                            larger eigenvalues correspond to signals that vary more sharply across
+                            hyperedges. Because L and Δ are symmetric, both have real eigenvalues and an
+                            orthonormal eigenvector basis — the "Spectral Properties" panel diagonalizes
+                            whichever operator is selected and lists them.
+                        </p>
+                    </div>
+                    <div class="theorem-block">
+                        <h3>Spectral Filtering</h3>
+                        <p>
+                            With eigenvectors V = [v<sub>1</sub>,…,v<sub>n</sub>] and a node-domain signal x,
+                            the <strong>graph Fourier transform</strong> x̂ = V<sup>−1</sup>x re-expresses x
+                            in the frequency basis of the selected operator. A <strong>filter</strong> is any
+                            gain g(λ<sub>i</sub>) applied per frequency:
+                        </p>
+                        <div class="formula-block">
+                            \[x' = V\,\mathrm{diag}(g(\lambda_1),\ldots,g(\lambda_n))\,V^{-1}x\]
+                        </div>
+                        <p>
+                            g ≡ 1 leaves x unchanged; zeroing gains at large λ is a low-pass filter that
+                            smooths x across hyperedges, and zeroing gains at small λ is a high-pass filter
+                            that keeps only sharp variation.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MathJax configuration before loading -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                processEscapes: true
+            },
+            startup: { typeset: true }
+        };
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+    <script src="app-hypergraph.js"></script>
+</body>
+</html>
